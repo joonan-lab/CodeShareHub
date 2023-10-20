@@ -8,3 +8,6 @@
 
 ### Random thoughts.
 - Pathway term이 되게 방대해질텐데, 관심있는 term만으로 plot을 만들 수 있도록 subset하려면 어떻게 해야할까? 가령 grepl이나..?
+- 추가요청: GSEA multiple plot -> ORA, GSEA 등등 여러 결과들이 한번에 그려지게 하기. treeplot 등등 다같이.
+  - Multipanel -> ORA는 up, down deg 한번에.
+  - fgsea -> gmt 여러가지 파일 한번에. 
