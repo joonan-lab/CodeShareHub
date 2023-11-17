@@ -393,3 +393,89 @@ plot_treeplot = function(df){
   g1 = ggarrange(p1, p2, p3, ncol=1, common.legend = TRUE, legend="right")
   return(g1)
 }
+
+
+plot_bar <- function(df){
+  
+  ### ORA
+  df_ORA1 = df[["ORA_up"]]
+  df_ORA1$direction = "Up"
+  df_ORA1 = df_ORA1 %>% top_n(10, -p.adjust)
+  
+  df_ORA2 = df[["ORA_down"]]
+  df_ORA2$direction = "Dn"
+  df_ORA2 = df_ORA2 %>% top_n(10, -p.adjust)
+  
+  df_ORA = rbind.data.frame(df_ORA1, df_ORA2)
+  
+  df_ORA$padj_Dir = ifelse(df_ORA$direction == "Up", -log10(df_ORA$p.adjust), log10(df_ORA$p.adjust))
+  df_ORA$binary_Dir = ifelse(df_ORA$direction == "Up", 1, 0)
+  
+  df_ORA$Description_ID_Dir = ifelse(df_ORA$direction == "Up", paste0(df_ORA$Description_ID, "   "),
+                                      paste0("   ", df_ORA$Description_ID))
+  
+  ## Visualize
+  p1 = ggplot(df_ORA, aes(x = padj_Dir, y = reorder(Description_ID_Dir, -log10(p.adjust)))) +
+    geom_bar(stat = "identity", 
+             color = 'black', lwd = 0.5,
+             aes(fill = direction), alpha= 0.75,
+             position = "identity", show.legend = F) +
+    scale_fill_manual(values = c("Up" = "#E64B35", "Dn" = "#3182bd")) +
+    geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust=df_ORA$binary_Dir) + 
+    xlim(c(-max(-log10(df_ORA$p.adjust)), max(-log10(df_ORA$p.adjust)))) +
+    #coord_fixed(ratio = 0.15) +
+    labs(x = '-log10(FDR)', y = '') +
+    #theme_minimal(base_size = 7) +
+    geom_vline(xintercept = 0, colour = "black", size = 0.5) + # Add 0 lines
+    theme_classic(base_size = 10) +
+    theme(
+      panel.grid.major = element_blank(),
+      axis.text.x = element_text(size = 10, colour="black", vjust = 1, hjust = 0.5),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.x = element_text(size = 12, vjust = 0.2),
+      axis.line.y = element_blank(),
+      plot.title = element_text(size = 12, face = "bold", vjust = 1.2, hjust = 0.5),
+      plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"))
+  
+  ### GSEA
+  df_GSEA = df[["GSEA"]]
+  df_GSEA = df_GSEA %>% top_n(20, abs(NES))
+  
+  df_GSEA$binary_Dir = ifelse(df_GSEA$NES > 0, 1, 0)
+  
+  df_GSEA$Description_ID_Dir = ifelse(df_GSEA$NES > 0, paste0(df_GSEA$Description_ID, "   "),
+                                       paste0("   ", df_GSEA$Description_ID))
+  
+  ## Visualize
+  p2 = ggplot(df_GSEA, aes(x = NES, y = reorder(Description_ID_Dir, NES))) +
+    geom_bar(stat = "identity", 
+             color = 'black', lwd = 0.5,
+             aes(fill = NES), alpha= 1,
+             position = "identity", show.legend = F) +
+    scale_fill_gradient2(low = '#90C0DF', mid = 'white', high = '#C593C2', midpoint = 0) + 
+    geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust=df_GSEA$binary_Dir) + 
+    xlim(c(-max(df_GSEA$NES), max(df_GSEA$NES))) +
+    #coord_fixed(ratio = 0.15) +
+    labs(x = 'NES', y = '') +
+    #theme_minimal(base_size = 7) +
+    geom_vline(xintercept = 0, colour = "black", size = 0.5) + # Add 0 lines
+    theme_classic(base_size = 10) +
+    theme(
+      panel.grid.major = element_blank(),
+      axis.text.x = element_text(size = 10, colour="black", vjust = 1, hjust = 0.5),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.x = element_text(size = 12, vjust = 0.2),
+      axis.line.y = element_blank(),
+      plot.title = element_text(size = 12, face = "bold", vjust = 1.2, hjust = 0.5),
+      plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"))
+  
+  g1 = plot_grid(p1, p2, labels = c("ORA", "GSEA"), label_size = 15)
+  
+  return(g1)
+}
+
+
+
+
