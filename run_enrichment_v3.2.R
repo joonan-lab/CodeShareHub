@@ -6,6 +6,8 @@ library(org.Hs.eg.db)
 library(cowplot)
 library(ggrepel)
 library(writexl)
+library(ggpubr)
+library(enrichplot)
 
 prepare_dataset <- function(df, lfc_column = NA, padj_column = NA, gene_name_column = NA, lfc_thresh = NA, padj_cutoff = NA){
   d = data.frame('SYMBOL' = df[,gene_name_column], 
@@ -362,4 +364,32 @@ plot_volcano <- function(df){
 }
 
 
-
+plot_treeplot = function(df){
+  offspring.tbl_tree_item <- getFromNamespace("offspring", "tidytree")
+  assign("offspring.tbl_tree_item", offspring.tbl_tree_item, envir = .GlobalEnv)
+  
+  termsim_ora_up <- pairwise_termsim(df$ORA_ego_up, method = "JC")
+  termsim_ora_down <- pairwise_termsim(df$ORA_ego_down, method = "JC")
+  termsim_gsea <- pairwise_termsim(df$GSEA_ego, method = "JC")
+  
+  p1 = treeplot(termsim_ora_up, showCategory = 12, fontsize = 3.5,
+                cluster.params = list(n = 4, label_words_n = 4),
+                offset.params = list(tiplab = 0.2), 
+                hilight.params = list(hilight = F)) +
+    ggtitle('ORA Up')
+  
+  p2 = treeplot(termsim_ora_down, showCategory = 12, fontsize = 3.5,
+                cluster.params = list(n = 4, label_words_n = 4),
+                offset.params = list(tiplab = 0.2), 
+                hilight.params = list(hilight = F)) +
+    ggtitle('ORA Down')
+  
+  p3 = treeplot(termsim_gsea, showCategory = 12, fontsize = 3.5,
+                cluster.params = list(n = 4, label_words_n = 4),
+                offset.params = list(tiplab = 0.2), 
+                hilight.params = list(hilight = F)) +
+    ggtitle('GSEA')
+  
+  g1 = ggarrange(p1, p2, p3, ncol=1, common.legend = TRUE, legend="right")
+  return(g1)
+}
