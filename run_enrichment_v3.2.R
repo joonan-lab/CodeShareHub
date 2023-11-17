@@ -477,5 +477,154 @@ plot_bar <- function(df){
 }
 
 
-
+plot_dotplot <- function(res){
+  res_ORA <- rbind(res[['ORA_up']] %>% mutate(direction = 'Up'), 
+                   res[['ORA_down']] %>% mutate(direction = 'Down'))
+  res_GSEA <- res[['GSEA']] %>% mutate(direction = ifelse(NES > 0, 'Up', 'Down'))
+  
+  res_ORA$GeneRatio = sapply(res_ORA$GeneRatio, function(x) eval(parse(text=x)))
+  res_ORA <- res_ORA %>% mutate(log_padj = -log10(p.adjust)) %>% 
+    mutate(log_padj = ifelse(direction == 'Up',log_padj, -log_padj)) %>% 
+    mutate(Description_ID_Dir = ifelse(res_ORA$direction == "Up", paste0(res_ORA$Description_ID, "   "),
+                                       paste0("   ", res_ORA$Description_ID))) %>%
+    mutate(binary_Dir = ifelse(direction == 'Up', 1, 0)) %>% 
+    group_by(direction) %>% 
+    arrange(desc(abs(log_padj))) %>%
+    slice_head(n = 10) %>% ungroup() %>% 
+    mutate(Description_ID = reorder(Description_ID_Dir, log_padj))
+  
+  res_GSEA <- res_GSEA %>% mutate(log_padj = -log10(p.adjust)) %>%
+    mutate(Description_ID_Dir = ifelse(res_GSEA$direction == "Up", paste0(res_GSEA$Description_ID, "   "),
+                                       paste0("   ", res_GSEA$Description_ID))) %>%
+    mutate(binary_Dir = ifelse(direction == 'Up', 1, 0)) %>% 
+    group_by(direction) %>% 
+    arrange(desc(abs(NES))) %>%
+    slice_head(n = 10) %>% ungroup() %>% 
+    mutate(Description_ID = reorder(Description_ID_Dir, NES))
+  
+  # plot ORA 
+  p0_ORA <- res_ORA %>% ggplot(aes(log_padj, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_ORA, direction == "Up"), aes(color = GeneRatio, size = Count)) +
+    scale_color_gradient(low = '#f0c4bd', high = "#E64B35") + 
+    new_scale_color()+
+    geom_point(data = subset(res_ORA, direction == "Down"), aes(color = GeneRatio, size = Count)) +
+    scale_color_gradient(low = '#dcf0fc', high = "#3182bd") + 
+    geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust= res_ORA$binary_Dir)+
+    geom_vline(xintercept = 0)+
+    scale_x_continuous(limits = c(-max(res_ORA$log_padj), max(res_ORA$log_padj)))+
+    theme_classic(base_size = 10) +
+    labs(x = '-log10(FDR)', y = '')+
+    theme(axis.text.y = element_blank(),
+          axis.title.x = element_text(size = 12),
+          axis.ticks.y = element_blank(),
+          axis.line.y = element_blank(),
+          panel.grid.major = element_blank(),
+          legend.position = 'none',
+          #panel.grid.minor = element_blank(),
+          #panel.border = element_blank(),
+          panel.background = element_blank())
+  
+  clr_plt_1 <- res_ORA %>% ggplot(aes(log_padj, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_ORA, direction == "Up"), aes(color = GeneRatio, size = Count)) +
+    scale_color_gradient(name = 'Up \n Gene Ratio', low = '#f0c4bd', high = "#E64B35") +
+    scale_size_continuous(guide = 'none')
+  clr_plt_2 <- res_ORA %>% ggplot(aes(log_padj, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_ORA, direction == "Down"), aes(color = GeneRatio, size = Count)) +
+    scale_color_gradient(name = 'Down \n Gene Ratio', low = '#dcf0fc', high = "#3182bd") +
+    scale_size_continuous(guide = 'none')
+  size_plt <- res_ORA %>% ggplot(aes(log_padj, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(aes(size = Count)) +
+    scale_size_continuous(name = 'Gene Count')
+  clr_lgd_1 <- get_legend(clr_plt_1)
+  clr_lgd_2 <- get_legend(clr_plt_2)
+  size_lgd <- get_legend(size_plt)
+  
+  blank_p <- plot_spacer() + theme_void()
+  leg12 <- plot_grid(clr_lgd_1, 
+                     size_lgd,
+                     blank_p,
+                     nrow = 3
+  )
+  leg30 <- plot_grid(clr_lgd_2, blank_p,
+                     blank_p, 
+                     nrow = 3
+  )
+  leg123_ORA <- plot_grid(leg12, leg30,
+                          ncol = 2
+  )
+  p_ORA <- plot_grid(p0_ORA + theme(plot.margin = margin(r = 15, t = 10, l = 0, b = 10)),
+                     leg123_ORA + theme(plot.margin = margin(l = 15)),
+                     nrow = 1,
+                     align = "h",
+                     axis = "t",
+                     rel_widths = c(1, 0.3))
+  
+  # plot GSEA
+  p0_GSEA <- res_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=NES, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_GSEA, direction == "Up"), aes(color = NES, size = log_padj)) +
+    scale_color_gradient(low = '#d9c1d7', high = "#c449bd") + 
+    new_scale_color()+
+    geom_point(data = subset(res_GSEA, direction == "Down"), aes(color = NES, size = log_padj)) +
+    scale_color_gradient(low = '#c8e7e8', high = "#169194") + 
+    geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust= res_GSEA$binary_Dir)+
+    geom_vline(xintercept = 0)+
+    scale_x_continuous(limits = c(-max(res_GSEA$NES), max(res_GSEA$NES)))+
+    theme_classic(base_size = 10) +
+    labs(x = 'NES', y = '')+
+    theme(axis.text.y = element_blank(),
+          axis.title.x = element_text(size = 12),
+          axis.ticks.y = element_blank(),
+          axis.line.y = element_blank(),
+          panel.grid.major = element_blank(),
+          legend.position = 'none',
+          #panel.grid.minor = element_blank(),
+          #panel.border = element_blank(),
+          panel.background = element_blank())
+  
+  clr_plt_1 <- res_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_GSEA, direction == "Up"), aes(color = NES, size = log_padj)) +
+    scale_color_gradient(name = 'Up NES', low = '#d9c1d7', high = "#c449bd") +
+    scale_size_continuous(guide = 'none')
+  clr_plt_2 <- res_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(data = subset(res_GSEA, direction == "Down"), aes(color = NES, size = log_padj)) +
+    scale_color_gradient(name = 'Down NES', low = '#c8e7e8', high = "#169194") +
+    scale_size_continuous(guide = 'none')
+  size_plt <- res_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
+    geom_segment( aes(x=0, xend=NES, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
+    geom_point(aes(size = log_padj)) +
+    scale_size_continuous(name = '-log10(FDR)')
+  
+  clr_lgd_1 <- get_legend(clr_plt_1)
+  clr_lgd_2 <- get_legend(clr_plt_2)
+  size_lgd <- get_legend(size_plt)
+  
+  blank_p <- plot_spacer() + theme_void()
+  leg12 <- plot_grid(clr_lgd_1, 
+                     size_lgd,
+                     blank_p,
+                     nrow = 3
+  )
+  leg30 <- plot_grid(clr_lgd_2, blank_p,
+                     blank_p, 
+                     nrow = 3
+  )
+  leg123_GSEA <- plot_grid(leg12, leg30,
+                           ncol = 2
+  )
+  p_GSEA <- plot_grid(p0_GSEA + theme(plot.margin = margin(r = 15, t = 10, l = 0)),
+                      leg123_GSEA + theme(plot.margin = margin(l = 15)),
+                      nrow = 1,
+                      align = "h",
+                      axis = "t",
+                      rel_widths = c(1, 0.3))
+  p <- plot_grid(p_ORA, p_GSEA, nrow = 1, labels = c('ORA', 'GSEA'))
+  return(p)
+}
 
