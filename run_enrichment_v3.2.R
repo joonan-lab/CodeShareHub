@@ -453,7 +453,7 @@ plot_bar <- function(df){
              color = 'black', lwd = 0.5,
              aes(fill = NES), alpha= 1,
              position = "identity", show.legend = F) +
-    scale_fill_gradient2(low = '#90C0DF', mid = 'white', high = '#C593C2', midpoint = 0) + 
+    scale_fill_gradient2(low = '#169164', mid = 'white', high = '#C593C2', midpoint = 0) + 
     geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust=df_GSEA$binary_Dir) + 
     xlim(c(-max(df_GSEA$NES), max(df_GSEA$NES))) +
     #coord_fixed(ratio = 0.15) +
