@@ -1,11 +1,11 @@
 library(dplyr)
 library(ggplot2)
-source("run_enrichment_v3.2.R")
+source("run_enrichment_v4.R")
 
 data = readRDS("test-dataset/DESeq2_table.RDS")
-
 colnames(data)
-# runORA for up-DEGs
+
+# Enrichment test
 res = run_all(data, lfc_column = "log2FoldChange", 
               padj_column = "padj", 
               gene_name_column = 'gene_name', 
@@ -14,9 +14,9 @@ res = run_all(data, lfc_column = "log2FoldChange",
               organism = 'human', 
               minGSSize = 100, 
               maxGSSize = 2000,
-              output_file = 'enrichment_result.xlsx')
+              output_file = 'test-result/enrichment_result.xlsx')
 
-
-plot_volcano(res$DEGs)
-
-plot_treeplot(res)
+res_pl = plot_all(res,
+                  width = 22.5,
+                  height = 20,
+                  output_file = 'test-result/enrichment_result.pdf')
