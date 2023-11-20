@@ -1,9 +1,8 @@
 # EnrichmentPlot
 
 <p align="center">
-    <img src="https://github.com/joonan-lab/CodeShareHub/assets/47490862/62fcf4c1-3fd0-4f99-84bc-1e17e921ca45" alt="image" width="800"/>
+    <img src="https://github.com/joonan-lab/CodeShareHub/assets/47490862/f37d617a-4002-4cd8-9fb1-cc3bc5128060" alt="image" width="800"/>
 </p>
-
 
 ```
 library(dplyr)
