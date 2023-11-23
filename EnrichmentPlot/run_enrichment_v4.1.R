@@ -317,7 +317,7 @@ run_all <- function(df,
 }
 
 ##### Visualization #####
-plot_volcano <- function(df){
+plot_volcano <- function(df, padj_val = padj_cutoff, lfc_val = lfc_thresh){
   df1 = df$DEG
   #set x-axis limit for visualization
   x_range = max(abs(df1$log2FC)) * 1.05
@@ -335,9 +335,9 @@ plot_volcano <- function(df){
     labs(title = paste('DEG volcano'),) + # Add a title + condition information
     xlab(expression(log[2]("Expr A" / "B"))) + # x-axis label
     ylab(expression(-log[10]("FDR"))) + # y-axis label
-    geom_hline(yintercept = -log10(padj_cutoff) - 0.01, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
-    geom_vline(xintercept = lfc_thresh, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
-    geom_vline(xintercept = -lfc_thresh, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+    geom_hline(yintercept = -log10(padj_val) - 0.01, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
+    geom_vline(xintercept = lfc_val, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+    geom_vline(xintercept = -lfc_val, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
     xlim(-x_range, x_range) + 
     geom_label_repel(
       data          = subset(df1, df1$SYMBOL %in% res.gene & df1$change == 'Down'),
@@ -642,8 +642,8 @@ plot_dotplot <- function(df){
   return(p)
 }
 
-plot_all <- function(df, output_file = 'results.pdf', width = 22.5, height = 20){
-  p1 = plot_volcano(df)
+plot_all <- function(df, output_file = 'results.pdf', width = 22.5, height = 20, padj_cutoff = NA, lfc_thresh = NA){
+  p1 = plot_volcano(df, padj_val = padj_cutoff, lfc_val = lfc_thresh)
   p2 = plot_treeplot(df)
   p3 = plot_bar(df)
   p4 = plot_dotplot(df)
