@@ -425,7 +425,7 @@ plot_bar <- function(df){
                                      paste0("   ", df_ORA$Description_ID))
   
   ## Visualize
-  p1 = ggplot(df_ORA, aes(x = padj_Dir, y = reorder(Description_ID_Dir, -log10(p.adjust)))) +
+  p1 = ggplot(df_ORA, aes(x = padj_Dir, y = reorder(Description_ID_Dir, log10(p.adjust)))) +
     geom_bar(stat = "identity", 
              color = 'black', lwd = 0.5,
              aes(fill = direction), alpha= 0.75,
@@ -522,7 +522,7 @@ plot_dotplot <- function(df){
     scale_color_gradient(low = '#dcf0fc', high = "#3182bd") + 
     geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust= df_ORA$binary_Dir)+
     geom_vline(xintercept = 0)+
-    scale_x_continuous(limits = c(-max(df_ORA$log_padj), max(df_ORA$log_padj)))+
+    scale_x_continuous(limits = limits = c(-max(abs(df_ORA$log_padj)), max(abs(df_ORA$log_padj))))+
     labs(x = '-log10(FDR)', y = '')+
     theme_classic(base_size = 10) +
     theme(
