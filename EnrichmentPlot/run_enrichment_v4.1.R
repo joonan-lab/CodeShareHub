@@ -335,9 +335,9 @@ plot_volcano <- function(df){
     labs(title = paste('DEG volcano'),) + # Add a title + condition information
     xlab(expression(log[2]("Expr A" / "B"))) + # x-axis label
     ylab(expression(-log[10]("FDR"))) + # y-axis label
-    geom_hline(yintercept = 1.3, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
-    geom_vline(xintercept = 0.5, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
-    geom_vline(xintercept = -0.5, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+    geom_hline(yintercept = -log10(padj_cutoff) - 0.01, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
+    geom_vline(xintercept = lfc_thresh, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+    geom_vline(xintercept = -lfc_thresh, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
     xlim(-x_range, x_range) + 
     geom_label_repel(
       data          = subset(df1, df1$SYMBOL %in% res.gene & df1$change == 'Down'),
