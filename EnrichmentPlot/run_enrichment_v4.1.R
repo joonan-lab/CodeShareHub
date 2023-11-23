@@ -425,7 +425,7 @@ plot_bar <- function(df){
                                      paste0("   ", df_ORA$Description_ID))
   
   ## Visualize
-  p1 = ggplot(df_ORA, aes(x = padj_Dir, y = reorder(Description_ID_Dir, log10(p.adjust)))) +
+  p1 = ggplot(df_ORA, aes(x = padj_Dir, y = reorder(Description_ID_Dir, padj_Dir))) +
     geom_bar(stat = "identity", 
              color = 'black', lwd = 0.5,
              aes(fill = direction), alpha= 0.75,
