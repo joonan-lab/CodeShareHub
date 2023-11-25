@@ -582,7 +582,7 @@ plot_dotplot <- function(df){
     scale_color_gradient(low = '#d9c1d7', high = "#c449bd") + 
     new_scale_color()+
     geom_point(data = subset(df_GSEA, direction == "Down"), aes(color = NES, size = log_padj)) +
-    scale_color_gradient(low = '#c8e7e8', high = "#169194") + 
+    scale_color_gradient(low =  low = '#169194', high = "#c8e7e8") + 
     geom_text(aes(y=Description_ID_Dir, x=0, label= Description_ID_Dir), hjust= df_GSEA$binary_Dir)+
     geom_vline(xintercept = 0)+
     scale_x_continuous(limits = c(-max(df_GSEA$NES), max(df_GSEA$NES)))+
@@ -608,7 +608,7 @@ plot_dotplot <- function(df){
   clr_plt_2 <- df_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
     geom_segment( aes(x=0, xend=log_padj, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
     geom_point(data = subset(df_GSEA, direction == "Down"), aes(color = NES, size = log_padj)) +
-    scale_color_gradient(name = 'Down NES', low = '#c8e7e8', high = "#169194") +
+    scale_color_gradient(name = 'Down NES', low = '#169194', high = "#c8e7e8") +
     scale_size_continuous(guide = 'none')
   size_plt <- df_GSEA %>% ggplot(aes(NES, Description_ID_Dir)) + 
     geom_segment( aes(x=0, xend=NES, y=Description_ID, yend=Description_ID), color = 'black', size = 0.6) +
