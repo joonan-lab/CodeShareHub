@@ -12,9 +12,11 @@ library(ggnewscale)
 library(patchwork)
 
 prepare_dataset <- function(df, lfc_column = NA, padj_column = NA, gene_name_column = NA, lfc_thresh = NA, padj_cutoff = NA){
+  print("Prepare Dataset")
   d = data.frame('SYMBOL' = df[,gene_name_column], 
                  'log2FC' = df[,lfc_column],
                  'p.adjust' = df[,padj_column])
+  colnames(d) = c("SYMBOL", "log2FC", "p.adjust")
   d = d %>% filter(!is.na(p.adjust))
   d$change = ifelse(d$p.adjust > padj_cutoff, 'None', 
                     ifelse(d$log2FC >= lfc_thresh, 'Up',
@@ -24,6 +26,7 @@ prepare_dataset <- function(df, lfc_column = NA, padj_column = NA, gene_name_col
 }
 
 run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
+  print("Run ORA")
   if(organism == 'human'){
     org_db = org.Hs.eg.db
     kegg_org = 'hsa'
@@ -162,6 +165,7 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
 }
 
 run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
+  print("Run GSEA")
   
   ### Convert gene format
   cat("Converting all pre-ranked genes to ENTREZ ID... \n")
