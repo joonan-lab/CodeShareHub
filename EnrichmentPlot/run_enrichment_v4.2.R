@@ -158,6 +158,22 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   down_res_df$Description <- firstup(down_res_df$Description)
   
   down_res_df$Description_ID = paste(down_res_df$Description, " (", down_res_df$ID, ")", sep = "")
+  
+  # Function to convert gene IDs to gene symbols
+  
+  org = ifelse(organism == 'human', "org.Hs.eg", "org.Mm.eg")
+  
+  convert_gene_ids <- function(gene_ids) {
+    gene_id_list <- strsplit(gene_ids, "/")
+    entrez_ids <- unlist(gene_id_list)
+    gene_symbols <- getSYMBOL(entrez_ids, data = org)
+    result <- paste(gene_symbols, collapse = ", ")
+    return(result)
+  }
+  
+  up_res_df$gene_symbols <- sapply(up_res_df$geneID, convert_gene_ids)  
+  down_res_df$gene_symbols <- sapply(down_res_df$geneID, convert_gene_ids)
+  
   res = list(Up = up_res_df, Down = down_res_df, ego_up = go_up_res, ego_down = go_down_res)
   cat("ORA complete :) \n\n")
   
