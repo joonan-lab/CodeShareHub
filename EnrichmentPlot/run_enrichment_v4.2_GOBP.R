@@ -1,6 +1,7 @@
 library(tidyverse)
 library(clusterProfiler)
 library(ReactomePA)
+library(annotate)
 library(org.Mm.eg.db)
 library(org.Hs.eg.db)
 library(cowplot)
@@ -52,10 +53,12 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   ENTREZID_dn <- bitr(down_deg, fromType = "SYMBOL",
                       toType = c("ENTREZID"),
                       OrgDb = org_db, drop = TRUE) %>% pull(ENTREZID)
+  
   # Run ORA
   cat("\nRunning ORA for up-regulated DEGs... \n")
+  
   cat(" - Running enrichGO...\n")
-  go_up_res = enrichGO(
+  go_up_res_bp = enrichGO(
     gene = ENTREZID_up,
     OrgDb = org_db,
     keyType = "ENTREZID",
@@ -68,40 +71,70 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
     readable = FALSE,
     pool = FALSE
   )
+  go_up_res_mf = enrichGO(
+    gene = ENTREZID_up,
+    OrgDb = org_db,
+    keyType = "ENTREZID",
+    ont = "MF",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    qvalueCutoff = 0.2,
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize,
+    readable = FALSE,
+    pool = FALSE
+  )
+  go_up_res_cc = enrichGO(
+    gene = ENTREZID_up,
+    OrgDb = org_db,
+    keyType = "ENTREZID",
+    ont = "CC",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    qvalueCutoff = 0.2,
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize,
+    readable = FALSE,
+    pool = FALSE
+  )
   
-  # cat(" - Running enrichKEGG... \n")
-  # kegg_up_res = enrichKEGG(
-  #   gene = ENTREZID_up,
-  #   organism = kegg_org,
-  #   keyType = "ncbi-geneid",
-  #   pvalueCutoff = 0.05,
-  #   pAdjustMethod = "fdr",
-  #   minGSSize = minGSSize,
-  #   maxGSSize = maxGSSize,
-  #   qvalueCutoff = 0.2,
-  #   use_internal_data = FALSE
-  # )
-  # 
-  # cat(" - Running enrichWP... \n")
-  # wp_up_res = enrichWP(gene = ENTREZID_up, 
-  #                      organism = WP_org,
-  #                      minGSSize = minGSSize,
-  #                      maxGSSize = maxGSSize)
-  # 
-  # cat(" - Running enrichPathway... \n\n")
-  # pa_up_res = enrichPathway(gene= ENTREZID_up, 
-  #                           pvalueCutoff = 0.05,
-  #                           organism = PA_org,
-  #                           minGSSize = minGSSize,
-  #                           maxGSSize = maxGSSize)
+  cat(" - Running enrichKEGG... \n")
+  kegg_up_res = enrichKEGG(
+    gene = ENTREZID_up,
+    organism = kegg_org,
+    keyType = "ncbi-geneid",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize,
+    qvalueCutoff = 0.2,
+    use_internal_data = FALSE
+  )
+
+  cat(" - Running enrichWP... \n")
+  wp_up_res = enrichWP(gene = ENTREZID_up,
+                       organism = WP_org,
+                       minGSSize = minGSSize,
+                       maxGSSize = maxGSSize)
+
+  cat(" - Running enrichPathway... \n\n")
+  pa_up_res = enrichPathway(gene= ENTREZID_up,
+                            pvalueCutoff = 0.05,
+                            organism = PA_org,
+                            minGSSize = minGSSize,
+                            maxGSSize = maxGSSize)
   
-  up_res = merge_result(list(go = go_up_res 
-                             # kegg = kegg_up_res, 
-                             # wp = wp_up_res, 
-                             # reactome = pa_up_res
+  up_res = merge_result(list(go_bp = go_up_res_bp,
+                             go_cc = go_up_res_cc,
+                             go_mf = go_up_res_mf,
+                             kegg = kegg_up_res,
+                             wp = wp_up_res,
+                             reactome = pa_up_res
                              ))
+  
   up_res_df = up_res@compareClusterResult
   # up_res_df$p.adjust = p.adjust(up_res_df$pvalue, 'fdr')
+  
   firstup <- function(x) {
     substr(x, 1, 1) <- toupper(substr(x, 1, 1))
     x
@@ -112,8 +145,9 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   up_res_df$Description_ID = paste(up_res_df$Description, " (", up_res_df$ID, ")", sep = "")
   
   cat("Running ORA for down-regulated DEGs... \n")
+  
   cat(" - Running enrichGO... \n")
-  go_down_res = enrichGO(
+  go_down_res_bp = enrichGO(
     gene = ENTREZID_dn,
     OrgDb = org_db,
     keyType = "ENTREZID",
@@ -125,37 +159,65 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
     maxGSSize = maxGSSize
   )
   
-  # cat(" - Running enrichKEGG.... \n")
-  # kegg_down_res = enrichKEGG(
-  #   gene = ENTREZID_dn,
-  #   organism = kegg_org,
-  #   keyType = "ncbi-geneid",
-  #   pvalueCutoff = 0.05,
-  #   pAdjustMethod = "fdr",
-  #   minGSSize = minGSSize,
-  #   maxGSSize = maxGSSize
-  # )
-  # 
-  # cat(" - Running enrichWP... \n")
-  # wp_down_res = enrichWP(gene = ENTREZID_dn, 
-  #                        organism = WP_org,
-  #                        minGSSize = minGSSize,
-  #                        maxGSSize = maxGSSize)
-  # 
-  # cat(" - Running enrichPathway... \n\n")
-  # pa_down_res = enrichPathway(gene= ENTREZID_dn, 
-  #                             pvalueCutoff = 0.05,
-  #                             organism = PA_org,
-  #                             minGSSize = minGSSize,
-  #                             maxGSSize = maxGSSize)
+  go_down_res_mf = enrichGO(
+    gene = ENTREZID_dn,
+    OrgDb = org_db,
+    keyType = "ENTREZID",
+    ont = "MF",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    qvalueCutoff = 0.2,
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize
+  )
   
-  down_res = merge_result(list(go = go_down_res
-                               # kegg = kegg_down_res, 
-                               # wiki = wp_down_res, 
-                               # reactome = pa_down_res
+  go_down_res_cc = enrichGO(
+    gene = ENTREZID_dn,
+    OrgDb = org_db,
+    keyType = "ENTREZID",
+    ont = "cc",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    qvalueCutoff = 0.2,
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize
+  )
+  
+  cat(" - Running enrichKEGG.... \n")
+  kegg_down_res = enrichKEGG(
+    gene = ENTREZID_dn,
+    organism = kegg_org,
+    keyType = "ncbi-geneid",
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "fdr",
+    minGSSize = minGSSize,
+    maxGSSize = maxGSSize
+  )
+
+  cat(" - Running enrichWP... \n")
+  wp_down_res = enrichWP(gene = ENTREZID_dn,
+                         organism = WP_org,
+                         minGSSize = minGSSize,
+                         maxGSSize = maxGSSize)
+
+  cat(" - Running enrichPathway... \n\n")
+  pa_down_res = enrichPathway(gene= ENTREZID_dn,
+                              pvalueCutoff = 0.05,
+                              organism = PA_org,
+                              minGSSize = minGSSize,
+                              maxGSSize = maxGSSize)
+  
+  down_res = merge_result(list(go_bp = go_down_res_bp,
+                               go_cc = go_down_res_cc,
+                               go_mf = go_down_res_mf,
+                               kegg = kegg_down_res,
+                               wiki = wp_down_res,
+                               reactome = pa_down_res
                                ))
+  
   down_res_df = down_res@compareClusterResult
   # down_res_df$p.adjust = p.adjust(down_res_df$pvalue, 'fdr')
+  
   down_res_df$Description <- tolower(down_res_df$Description)
   down_res_df$Description <- firstup(down_res_df$Description)
   
@@ -176,7 +238,12 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   up_res_df$gene_symbols <- sapply(up_res_df$geneID, convert_gene_ids)  
   down_res_df$gene_symbols <- sapply(down_res_df$geneID, convert_gene_ids)
   
-  res = list(Up = up_res_df, Down = down_res_df, ego_up = go_up_res, ego_down = go_down_res)
+  up_res_df_bp = up_res_df[up_res_df$ONTOLOGY == "BP",]
+  down_res_df_bp = down_res_df[down_res_df$ONTOLGY == "BP",]
+  
+  res = list(Up = up_res_df, Down = down_res_df,
+             Up_BP = up_res_df_bp, Down_BP = down_res_df_bp,
+             ego_up_bp = go_up_res_bp, ego_down_bp = go_down_res_bp)
   cat("ORA complete :) \n\n")
   
   return(res)
@@ -184,21 +251,28 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
 
 run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   print("Run GSEA")
+  if(organism == 'human'){
+    org_db = org.Hs.eg.db
+    kegg_org = 'hsa'
+    WP_org = 'Homo sapiens'
+    PA_org = 'human'
+  } 
+  else if (organism == 'mouse'){
+    org_db = org.Mm.eg.db
+    kegg_org = 'mmu'
+    WP_org = 'Mus musculus'
+    PA_org = 'mouse'
+  } else {
+    stop('Organism not supported. Possible options: "human", "mouse"')
+  }
   
   ### Convert gene format
   cat("Converting all pre-ranked genes to ENTREZ ID... \n")
-  if (organism == 'human'){
-    ENTREZID <- bitr(df$SYMBOL, fromType = "SYMBOL",
-                     toType = c("ENTREZID"),
-                     OrgDb = org.Hs.eg.db, drop = TRUE)
-  } else if (organism == 'mouse'){
-    ENTREZID <- bitr(df$SYMBOL, fromType = "SYMBOL",
-                     toType = c("ENTREZID"),
-                     OrgDb = org.Mm.eg.db, drop = TRUE)
-  }
-  else {
-    print('Organism not supported. Possible options: "human", "mouse"')
-  }
+  
+  ENTREZID <- bitr(df$SYMBOL, fromType = "SYMBOL",
+                    toType = c("ENTREZID"),
+                    OrgDb = org_db, drop = TRUE) 
+  
   df1 = merge(df, ENTREZID, by = "SYMBOL")
   
   ### Make gene list
@@ -207,94 +281,70 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   names(geneList) = df2$ENTREZID
   
   ########## Pathway Analysis ##########
-  if (organism == "human"){
-    ## GO
-    cat("\nRunning GSEA for pre-ranked genes... \n")
-    cat(" - Running gseGO...\n")
-    ego <- gseGO(geneList     = geneList,
-                 OrgDb        = org.Hs.eg.db,
-                 ont          = "BP",
-                 minGSSize    = minGSSize,
-                 maxGSSize    = maxGSSize,
-                 pvalueCutoff = 0.05,
-                 pAdjustMethod = "fdr", 
-                 verbose      = FALSE)
-    # ## KEGG
-    # cat(" - Running gseKEGG...\n")
-    # kk <- gseKEGG(geneList     = geneList,
-    #               organism     = 'hsa',
-    #               minGSSize    = minGSSize,
-    #               maxGSSize    = maxGSSize,
-    #               pvalueCutoff = 0.05,
-    #               pAdjustMethod = "fdr", 
-    #               verbose      = FALSE)
-    # ## WikiPathway
-    # cat(" - Running gseWP...\n")
-    # wp <- gseWP(geneList = geneList, 
-    #             organism = "Homo sapiens",
-    #             minGSSize    = minGSSize,
-    #             maxGSSize    = maxGSSize,
-    #             pvalueCutoff = 0.05,
-    #             pAdjustMethod = "fdr", 
-    #             verbose      = FALSE)
-    # ## Reactome
-    # cat(" - Running gsePathway...\n\n")
-    # y <- gsePathway(geneList, 
-    #                 organism = "human",
-    #                 minGSSize    = minGSSize,
-    #                 maxGSSize    = maxGSSize,
-    #                 pvalueCutoff = 0.05,
-    #                 pAdjustMethod = "fdr", 
-    #                 verbose = FALSE)
-  } else if (organism == "mouse") {
-    ## GO
-    cat("\nRunning GSEA for pre-ranked genes... \n")
-    cat(" - Running gseGO...\n")
-    ego <- gseGO(geneList     = geneList,
-                 OrgDb        = org.Mm.eg.db,
-                 ont          = "ALL",
-                 minGSSize    = minGSSize,
-                 maxGSSize    = maxGSSize,
-                 pvalueCutoff = 0.05,
-                 pAdjustMethod = "fdr", 
-                 verbose      = FALSE)
-    # ## KEGG
-    # cat(" - Running gseKEGG...\n")
-    # kk <- gseKEGG(geneList     = geneList,
-    #               organism     = 'mmu',
-    #               minGSSize    = minGSSize,
-    #               maxGSSize    = maxGSSize,
-    #               pvalueCutoff = 0.05,
-    #               pAdjustMethod = "fdr", 
-    #               verbose      = FALSE)
-    # ## WikiPathway
-    # cat(" - Running gseWP...\n")
-    # wp <- gseWP(geneList = geneList, 
-    #             organism = "Mus musculus",
-    #             minGSSize    = minGSSize,
-    #             maxGSSize    = maxGSSize,
-    #             pvalueCutoff = 0.05,
-    #             pAdjustMethod = "fdr", 
-    #             verbose      = FALSE)
-    # ## Reactome
-    # cat(" - Running gsePathway...\n\n")
-    # y <- gsePathway(geneList, 
-    #                 organism = "mouse",
-    #                 minGSSize    = minGSSize,
-    #                 maxGSSize    = maxGSSize,
-    #                 pvalueCutoff = 0.05,
-    #                 pAdjustMethod = "fdr", 
-    #                 verbose = FALSE)
-  } else {
-    print('Organism not supported. Possible options: "human", "mouse"')
-  }
+  ## GO
+  cat("\nRunning GSEA for pre-ranked genes... \n")
+  cat(" - Running gseGO...\n")
+  ego_bp <- gseGO(geneList     = geneList,
+               OrgDb        = org_db,
+               ont          = "BP",
+               minGSSize    = minGSSize,
+               maxGSSize    = maxGSSize,
+               pvalueCutoff = 0.05,
+               pAdjustMethod = "fdr", 
+               verbose      = FALSE)
+  ego_mf <- gseGO(geneList     = geneList,
+                  OrgDb        = org_db,
+                  ont          = "MF",
+                  minGSSize    = minGSSize,
+                  maxGSSize    = maxGSSize,
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "fdr", 
+                  verbose      = FALSE)
+  ego_cc <- gseGO(geneList     = geneList,
+                  OrgDb        = org_db,
+                  ont          = "CC",
+                  minGSSize    = minGSSize,
+                  maxGSSize    = maxGSSize,
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "fdr", 
+                  verbose      = FALSE)
+  ## KEGG
+  cat(" - Running gseKEGG...\n")
+  kk <- gseKEGG(geneList     = geneList,
+                organism     = kegg_org,
+                minGSSize    = minGSSize,
+                maxGSSize    = maxGSSize,
+                pvalueCutoff = 0.05,
+                pAdjustMethod = "fdr",
+                verbose      = FALSE)
+  ## WikiPathway
+  cat(" - Running gseWP...\n")
+  wp <- gseWP(geneList = geneList,
+              organism = WP_org,
+              minGSSize    = minGSSize,
+              maxGSSize    = maxGSSize,
+              pvalueCutoff = 0.05,
+              pAdjustMethod = "fdr",
+              verbose      = FALSE)
+  ## Reactome
+  cat(" - Running gsePathway...\n\n")
+  y <- gsePathway(geneList,
+                  organism = PA_org,
+                  minGSSize    = minGSSize,
+                  maxGSSize    = maxGSSize,
+                  pvalueCutoff = 0.05,
+                  pAdjustMethod = "fdr",
+                  verbose = FALSE)
   
   ## Merge all results
-  merged_res = merge_result(list(go = ego
-                                 # kegg = kk, 
-                                 # wiki = wp, 
-                                 # reactome = y
+  merged_res = merge_result(list(go_bp = ego_bp,
+                                 go_cc = ego_cc,
+                                 go_mf = ego_mf,
+                                 kegg = kk,
+                                 wiki = wp,
+                                 reactome = y
                                  ))
+  
   merged_res2 = as.data.frame(merged_res@compareClusterResult)
   # merged_res2$p.adjust = p.adjust(merged_res2$pvalue, 'fdr')
   
@@ -304,10 +354,12 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   }
   merged_res2$Description <- tolower(merged_res2$Description)
   merged_res2$Description <- firstup(merged_res2$Description)
-  
   merged_res2$Description_ID = paste(merged_res2$Description, " (", merged_res2$ID, ")", sep = "")
   
-  res_gsea = list(GSEA = merged_res2, ego_gsea = ego)
+  merged_res2_bp = merged_res2[merged_res2$ONTOLOGY == "BP",]
+  
+  res_gsea = list(GSEA = merged_res2, GSEA_BP = merged_res2_bp,
+                  ego_gsea_bp = ego_bp)
   
   cat("GSEA complete :] \n\n")
   return(res_gsea)
@@ -322,22 +374,25 @@ run_all <- function(df,
                     organism = NA,
                     minGSSize = 100, 
                     maxGSSize = 2000,
-                    output_file = 'results.xlsx'){
+                    output_file = 'results_BP.xlsx'){
   prep_df = prepare_dataset(df, lfc_column = lfc_column, padj_column = padj_column, gene_name_column = gene_name_column, lfc_thresh = lfc_thresh, padj_cutoff = padj_cutoff)
   ORA_res = run_ORA(prep_df, organism = organism, minGSSize = minGSSize, maxGSSize = maxGSSize)
   GSEA_res = run_GSEA(prep_df, organism = organism, minGSSize = minGSSize, maxGSSize = maxGSSize)
   res_list = list(DEGs = prep_df, 
                   ORA_up = ORA_res[['Up']], 
                   ORA_down = ORA_res[['Down']], 
-                  GSEA = GSEA_res[['GSEA']])
+                  ORA_up_BP = ORA_res[['Up_BP']],
+                  ORA_down_BP = ORA_res[['Down_BP']],
+                  GSEA = GSEA_res[['GSEA']],
+                  GSEA_BP = GSEA_res[['GSEA_BP']])
   
   wd_path = getwd()
   cat(paste0('Saving results to ', '"', wd_path, '/', output_file, '"\n'))
   write_xlsx(x = res_list, path = output_file)
   
-  res_list[['ORA_ego_up']] = ORA_res[['ego_up']]
-  res_list[['ORA_ego_down']] = ORA_res[['ego_down']]
-  res_list[['GSEA_ego']] = GSEA_res[['ego_gsea']]
+  res_list[['ORA_ego_up']] = ORA_res[['ego_up_bp']]
+  res_list[['ORA_ego_down']] = ORA_res[['ego_down_bp']]
+  res_list[['GSEA_ego']] = GSEA_res[['ego_gsea_bp']]
   return(res_list)
 }
 
@@ -426,7 +481,7 @@ plot_treeplot = function(df){
   #+  ggtitle('GSEA')
   
   g1 = ggarrange(p1, p2, p3, ncol=1, common.legend = TRUE, legend="right", 
-                 labels = c("ORA Up", "ORA Down", "GSEA"))
+                 labels = c("  ORA Up", "ORA Down", "  GSEA"))
   return(g1)
 }
 
@@ -508,7 +563,9 @@ plot_bar <- function(df){
       #plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
       plot.margin = margin(t = 10, b = 10))
   
-  g1 = plot_grid(p1,p2,ncol = 1, labels = c("ORA", "GSEA"), label_size = 15)
+  g1 = plot_grid(p1,p2,ncol = 1, labels = c("ORA", "GSEA"),
+                 label_x = 0, label_y = 1,
+                 hjust = -0.5, vjust = -0.5)
   
   return(g1)
 }
@@ -663,11 +720,13 @@ plot_dotplot <- function(df){
                       align = "h",
                       axis = "t",
                       rel_widths = c(1, 0.3))
-  p <- plot_grid(p_ORA, p_GSEA, ncol = 1, labels = c('ORA', 'GSEA'))
+  p <- plot_grid(p_ORA, p_GSEA, ncol = 1, labels = c('ORA', 'GSEA'), 
+                 label_x = 0, label_y = 1,
+                 hjust = -0.5, vjust = -0.5)
   return(p)
 }
 
-plot_all <- function(df, output_file = 'results.pdf', width = 22.5, height = 20, padj_cutoff = NA, lfc_thresh = NA){
+plot_all <- function(df, output_file = 'results_BP.pdf', width = 22.5, height = 20, padj_cutoff = NA, lfc_thresh = NA){
   p1 = plot_volcano(df, padj_val = padj_cutoff, lfc_val = lfc_thresh)
   p2 = plot_treeplot(df)
   p3 = plot_bar(df)
