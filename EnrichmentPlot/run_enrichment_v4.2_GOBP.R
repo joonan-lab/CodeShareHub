@@ -238,8 +238,8 @@ run_ORA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   up_res_df$gene_symbols <- sapply(up_res_df$geneID, convert_gene_ids)  
   down_res_df$gene_symbols <- sapply(down_res_df$geneID, convert_gene_ids)
   
-  up_res_df_bp = up_res_df[up_res_df$ONTOLOGY == "BP",]
-  down_res_df_bp = down_res_df[down_res_df$ONTOLGY == "BP",]
+  up_res_df_bp = up_res_df[up_res_df$ONTOLOGY == "go_bp",]
+  down_res_df_bp = down_res_df[down_res_df$ONTOLGY == "go_bp",]
   
   res = list(Up = up_res_df, Down = down_res_df,
              Up_BP = up_res_df_bp, Down_BP = down_res_df_bp,
@@ -356,7 +356,7 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
   merged_res2$Description <- firstup(merged_res2$Description)
   merged_res2$Description_ID = paste(merged_res2$Description, " (", merged_res2$ID, ")", sep = "")
   
-  merged_res2_bp = merged_res2[merged_res2$ONTOLOGY == "BP",]
+  merged_res2_bp = merged_res2[merged_res2$ONTOLOGY == "go_bp",]
   
   res_gsea = list(GSEA = merged_res2, GSEA_BP = merged_res2_bp,
                   ego_gsea_bp = ego_bp)
