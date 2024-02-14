@@ -1,6 +1,7 @@
 rm(list = ls())
 library(dplyr)
 library(ggplot2)
+library(annotate)
 setwd("~/Dropbox/CodeShareHub/EnrichmentPlot/")
 source("run_enrichment_v4.2_GOBP.R")
 
