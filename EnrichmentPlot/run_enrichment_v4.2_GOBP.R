@@ -530,7 +530,7 @@ plot_bar <- function(df){
       plot.margin = margin(t = 10, b = 10))
   
   ### GSEA
-  df_GSEA = df[["GSEA__BP"]]
+  df_GSEA = df[["GSEA_BP"]]
   df_GSEA = df_GSEA %>% top_n(20, abs(NES))
   
   df_GSEA$binary_Dir = ifelse(df_GSEA$NES > 0, 1, 0)
