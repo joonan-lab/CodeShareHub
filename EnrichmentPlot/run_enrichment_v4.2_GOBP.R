@@ -488,11 +488,11 @@ plot_treeplot = function(df){
 plot_bar <- function(df){
   
   ### ORA
-  df_ORA1 = df[["ORA_up"]]
+  df_ORA1 = df[["ORA_up_BP"]]
   df_ORA1$direction = "Up"
   df_ORA1 = df_ORA1 %>% top_n(10, -p.adjust)
   
-  df_ORA2 = df[["ORA_down"]]
+  df_ORA2 = df[["ORA_down_BP"]]
   df_ORA2$direction = "Dn"
   df_ORA2 = df_ORA2 %>% top_n(10, -p.adjust)
   
@@ -530,7 +530,7 @@ plot_bar <- function(df){
       plot.margin = margin(t = 10, b = 10))
   
   ### GSEA
-  df_GSEA = df[["GSEA"]]
+  df_GSEA = df[["GSEA__BP"]]
   df_GSEA = df_GSEA %>% top_n(20, abs(NES))
   
   df_GSEA$binary_Dir = ifelse(df_GSEA$NES > 0, 1, 0)
@@ -571,9 +571,9 @@ plot_bar <- function(df){
 }
 
 plot_dotplot <- function(df){
-  df_ORA <- rbind(df[['ORA_up']] %>% mutate(direction = 'Up'), 
-                  df[['ORA_down']] %>% mutate(direction = 'Down'))
-  df_GSEA <- df[['GSEA']] %>% mutate(direction = ifelse(NES > 0, 'Up', 'Down'))
+  df_ORA <- rbind(df[['ORA_up_BP']] %>% mutate(direction = 'Up'), 
+                  df[['ORA_down_BP']] %>% mutate(direction = 'Down'))
+  df_GSEA <- df[['GSEA_BP']] %>% mutate(direction = ifelse(NES > 0, 'Up', 'Down'))
   
   df_ORA$GeneRatio = sapply(df_ORA$GeneRatio, function(x) eval(parse(text=x)))
   df_ORA <- df_ORA %>% mutate(log_padj = -log10(p.adjust)) %>% 
