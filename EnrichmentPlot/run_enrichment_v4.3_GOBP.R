@@ -292,7 +292,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
                maxGSSize    = maxGSSize,
                pvalueCutoff = 0.05,
                pAdjustMethod = "fdr", 
-               verbose      = FALSE)
+               verbose      = FALSE,
+               eps = 0)
   ego_mf <- gseGO(geneList     = geneList,
                   OrgDb        = org_db,
                   ont          = "MF",
@@ -300,7 +301,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
                   maxGSSize    = maxGSSize,
                   pvalueCutoff = 0.05,
                   pAdjustMethod = "fdr", 
-                  verbose      = FALSE)
+                  verbose      = FALSE,
+                  eps = 0)
   ego_cc <- gseGO(geneList     = geneList,
                   OrgDb        = org_db,
                   ont          = "CC",
@@ -308,7 +310,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
                   maxGSSize    = maxGSSize,
                   pvalueCutoff = 0.05,
                   pAdjustMethod = "fdr", 
-                  verbose      = FALSE)
+                  verbose      = FALSE,
+                  eps = 0)
   ## KEGG
   cat(" - Running gseKEGG...\n")
   kk <- gseKEGG(geneList     = geneList,
@@ -317,7 +320,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
                 maxGSSize    = maxGSSize,
                 pvalueCutoff = 0.05,
                 pAdjustMethod = "fdr",
-                verbose      = FALSE)
+                verbose      = FALSE,
+                eps = 0)
   ## WikiPathway
   cat(" - Running gseWP...\n")
   wp <- gseWP(geneList = geneList,
@@ -326,7 +330,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
               maxGSSize    = maxGSSize,
               pvalueCutoff = 0.05,
               pAdjustMethod = "fdr",
-              verbose      = FALSE)
+              verbose      = FALSE,
+              eps = 0)
   ## Reactome
   cat(" - Running gsePathway...\n\n")
   y <- gsePathway(geneList,
@@ -335,7 +340,8 @@ run_GSEA <- function(df, organism = NA, minGSSize = 100, maxGSSize = 2000){
                   maxGSSize    = maxGSSize,
                   pvalueCutoff = 0.05,
                   pAdjustMethod = "fdr",
-                  verbose = FALSE)
+                  verbose = FALSE,
+                  eps = 0)
   
   ## Merge all results
   merged_res = merge_result(list(go_bp = ego_bp,
@@ -399,13 +405,13 @@ run_all <- function(df,
 
 ##### Visualization #####
 plot_volcano <- function(df, padj_val = padj_cutoff, lfc_val = lfc_thresh){
-  df1 = df$DEG
+  df1 = df$DEGs
   #set x-axis limit for visualization
   x_range = max(abs(df1$log2FC)) * 1.05
   
   #set gene symbol to print
-  gene_up = df1 %>% filter(change == 'Up') %>% slice_min(., p.adjust,n = 10) %>% pull(SYMBOL)
-  gene_down = df1 %>% filter(change == 'Down') %>% slice_min(., p.adjust, n = 10) %>% pull(SYMBOL)
+  gene_up = df1 %>% filter(change == 'Up') %>% slice_min(., p.adjust,n = 15) %>% pull(SYMBOL)
+  gene_down = df1 %>% filter(change == 'Down') %>% slice_min(., p.adjust, n = 15) %>% pull(SYMBOL)
   res.gene = c(gene_up, gene_down)
   
   p = ggplot(df1, aes(x = log2FC, y = -log10(p.adjust))) + 
@@ -415,10 +421,10 @@ plot_volcano <- function(df, padj_val = padj_cutoff, lfc_val = lfc_thresh){
     theme_classic(base_size = 15) + # change theme
     labs(title = paste('DEG volcano'),) + # Add a title + condition information
     xlab(expression(log[2]("Expr A" / "B"))) + # x-axis label
-    ylab(expression(-log[10]("FDR"))) + # y-axis label
-    geom_hline(yintercept = -log10(padj_val) - 0.01, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
-    #   geom_vline(xintercept = lfc_val, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
-    #  geom_vline(xintercept = -lfc_val, linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+    ylab(expression(-log[10]("pvalue"))) + # y-axis label
+    geom_hline(yintercept = -log10(as.numeric(padj_val)) - 0.01, colour = "grey40", linetype='dashed', size = 0.7) + # Add cutoffs
+      geom_vline(xintercept = as.numeric(lfc_val), linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
+     geom_vline(xintercept = -as.numeric(lfc_val), linetype='dashed', colour = "grey40", size = 0.7) + # Add 0 lines
     xlim(-x_range, x_range) + 
     geom_label_repel(
       data          = subset(df1, df1$SYMBOL %in% res.gene & df1$change == 'Down'),
