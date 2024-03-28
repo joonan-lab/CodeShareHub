@@ -686,21 +686,21 @@ plot_all <- function(res,
   ####
   bar_df_list = list()
   bar_df_list[['GO_ALL']] = make_df(res_list_df, db_source='GO', reactome=FALSE)
-  # bar_df_list[['GO_REACTOME']] = make_df(res_list_df, db_source='GO', reactome=TRUE)
+  bar_df_list[['GO_REACTOME']] = make_df(res_list_df, db_source='GO', reactome=TRUE)
   bar_df_list[['GSEA']] = make_df(res_list_df, db_source='GSEA', reactome=FALSE)
-  # bar_df_list[['GSEA_REACTOME']] = make_df(res_list_df, db_source='GSEA', reactome=TRUE)
+  bar_df_list[['GSEA_REACTOME']] = make_df(res_list_df, db_source='GSEA', reactome=TRUE)
   
   p_bar_list = lapply(names(bar_df_list), function(x){plot_bar(bar_df_list[[x]], plot_title=x)})
   #names(p_bar_list) = names(bar_df_list)
   #p4 = plot_dotplot(res_list)
   
   g0 = plot_grid(plotlist=list(p1, p2), nrow = 1, rel_widths = c(1, 1.5))
-  g1 = plot_grid(plotlist=p_bar_list, nrow = 1, rel_widths = c(1,1))
-  g2 = plot_grid(plotlist=list(g0, g1), nrow = 2, rel_heights = c(1, 0.75))
+  g1 = plot_grid(plotlist=p_bar_list, nrow = 2, rel_widths = c(1,1))
+  g2 = plot_grid(plotlist=list(g0, g1), nrow = 2, rel_heights = c(1, 1.5))
   
   #ggsave(g2, file= output_file, width = width, height = height)
   print("Save result plots...")
-  pdf(paste0(output_file, '.pdf'), width = width, height = height)
+  pdf(paste0(output_file), width = width, height = height)
   print(g2)
   dev.off()
   print("Done!")
