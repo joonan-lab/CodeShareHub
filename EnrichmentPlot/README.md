@@ -1,7 +1,5 @@
 # EnrichmentPlot
 
-![enrichment_result](https://github.com/joonan-lab/CodeShareHub/assets/47490862/73fa9a0a-8088-47dd-b219-d2b9def715c9)
-
 ```
 library(dplyr)
 library(ggplot2)
