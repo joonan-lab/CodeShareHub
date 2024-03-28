@@ -1,30 +1,32 @@
 # EnrichmentPlot
 
-<p align="center">
-    <img src="https://github.com/joonan-lab/CodeShareHub/assets/47490862/f37d617a-4002-4cd8-9fb1-cc3bc5128060" alt="image" width="800"/>
-</p>
+![enrichment_result](https://github.com/joonan-lab/CodeShareHub/assets/47490862/73fa9a0a-8088-47dd-b219-d2b9def715c9)
 
 ```
 library(dplyr)
 library(ggplot2)
-source("run_enrichment_v4.R")
+library(annotate)
+source("run_enrichment_v7.R")
 
-data = readRDS("test-dataset/DESeq2_table.RDS")
-colnames(data)
+data = readRDS("test/DESeq2_KD.WT_RNA-Seq.RDS")
 
 # Enrichment test
-res = run_all(data, lfc_column = "log2FoldChange", 
-              padj_column = "padj", 
+res = run_all(deg_sample, 
+              organism = 'mouse', 
+              lfc_column = "avg_log2FC", 
+              padj_column = "p_val_adj", 
               gene_name_column = 'gene_name', 
               lfc_thresh = 0.25, 
               padj_cutoff = 0.05, 
-              organism = 'human', 
               minGSSize = 100, 
-              maxGSSize = 2000,
-              output_file = 'test-result/enrichment_result.xlsx')
+              maxGSSize = 1000,
+              output_file = 'sample_enrichment_result.xlsx')
 
+# Visualization
 res_pl = plot_all(res,
-                  width = 22.5,
-                  height = 20,
-                  output_file = 'test-result/enrichment_result.pdf')
+                  width = 20,
+                  height = 17.5,
+                  lfc_thresh = 0.25, 
+                  padj_cutoff = 0.05, 
+                  output_file = 'enrichment_result.pdf')
 ```
